@@ -4,442 +4,245 @@
 
 | # | Feature | Core |
 |---|---------|------|
-| 1 | User authentication & account management | x |
-| 2 | Audio streaming | x |
-| 3 | Song uploading (artist application) | x |
-| 4 | Catalogue search & discovery | x |
-| 5 | Payment processing & premium access | x |
-| 6 | Playlist management | x |
-| 7 | Group listening session | x |
-| 8 | Offline downloading (premium) | x |
+| 1 | Song upload (artist portal) | x |
+| 2 | Catalogue search | x |
+| 3 | Audio streaming | x |
+| 4 | Playlists | x |
+| 5 | User accounts & login | |
+| 6 | Payment & Premium | |
+| 7 | Group listening | |
+| 8 | Offline download (Premium) | |
+| 9 | Notifications | |
+| 10 | Music recommendations | |
+| 11 | Artist statistics & promotion | |
+| 12 | Music player & queue | |
+| 13 | User library & following artists | |
+| 14 | Settings & privacy | |
+
+## Why these core features
+
+For the MVP, we chose the smallest set of features that gives the main value of the
+platform from start to end: **an artist publishes a song, a listener finds it, and the
+listener plays it**.
+
+- **Song upload** is core because without songs there is nothing to listen to.
+- **Catalogue search** is core because listeners must be able to find songs.
+- **Audio streaming** is core because playing music is the main purpose of the product.
+- **Playlists** are core because they are the main way for listeners to organize their music
+  and come back to it, which makes them use the platform again.
+
+All other features are auxiliary for the MVP. User accounts and login are needed, but they
+are a common service that we expect to exist. Payment, group listening and offline download
+add value or bring money, but the platform can work without them.
 
 ## Core features and responsibilities
 
-### Feature: User Authentication & Account Management
+### Feature: Song Upload
 
-As a user, I want to create an account, log in, and manage my profile so that I can securely access the platform and personalize my information.
+As an artist, I want to upload my songs and their information so that people can listen to them on the platform.
 
 #### Feature breakdown
 
-1. The user opens the login page and enters their email address or selects a third-party SSO provider.
-2. The system checks whether an account is associated with this identity.
-3. If an account exists, the user enters their password or completes the SSO challenge.
-4. If no account exists, the system offers the user the option to create one, choosing between a listener or an artist role.
-5. The user inputs personal details (name, username, email, password, optional phone/picture) and grants GDPR/privacy consent.
-6. The user verifies their email address or phone number via a received code or link.
-7. Once verified, the system provisions the account resources, stores data, and issues an active session.
-8. The user can access, export, or update profile settings, change their password, or trigger a complete account deletion.
+1. The artist opens the artist portal and chooses an audio file and a cover image.
+2. The artist fills in the song information (title, genre, release date, contributors, ISRC code).
+3. The system checks that the user is an artist and that the files are valid (format, size, not damaged).
+4. The system puts the upload in a queue to process it in the background.
+5. The system converts the audio into streaming formats, adjusts the volume level, and creates several sizes of the cover image.
+6. The system saves the processed files and adds the song to the catalogue.
+7. The system tells the artist the result and sends the new song to the search index.
 
 #### Responsibilities
 
-##### Account registration & provisioning responsibilities
-* Collect and sanitize user details (name, username, email, password, picture)
-* Distinguish and provision specific roles (listener, artist, admin) during registration
-* Validate input formatting for email addresses and phone numbers
-* Enforce password strength rules and policy checks against compromised password databases
-* Initialize default user preferences and library metadata in the primary database
-* Handle account state transitions (pending, active, suspended, deleted)
+##### Upload responsibilities (steps 1, 3)
+* Show the upload form and the upload progress in the artist portal
+* Check that the user is an artist
+* Receive the audio file and the cover image
+* Continue an upload after a connection problem (for large files)
+* Check the audio file format, size and that the file is not damaged
+* Check the cover image format and size
 
-##### Authentication & session management responsibilities
-* Authenticate credentials against secure password hashes
-* Integrate third-party SSO providers (Apple, Google)
-* Issue, sign, and manage secure JWT access tokens and refresh tokens
-* Manage secure, HTTP-only session cookies for web clients
-* Track active user sessions across multiple client devices
-* Provide cross-device token revocation and session invalidation mechanisms
+##### Song information responsibilities (step 2)
+* Collect and check the song information (title, genre, release date, contributors, explicit content)
+* Check the ISRC code (international song identifier)
+* Link the song to the artist and the album
 
-##### Verification & notification responsibilities
-* Generate cryptographically secure, time-limited verification tokens
-* Integrate with external email and SMS gateways to transmit OTPs (One-Time Passwords)
-* Validate incoming verification codes against pending account registrations
-* Handle rate-limiting for verification requests to prevent abuse
-* Trigger localized welcome and account state notifications
+##### Audio processing responsibilities (steps 4, 5)
+* Put uploads in a queue and process them in the background
+* Convert the audio into streaming formats and qualities
+* Measure the volume level and calculate a volume adjustment
+* Create several sizes of the cover image
 
-##### Data privacy & compliance responsibilities
-* Hash and salt passwords using strong algorithms
-* Record, version, and store user consent for personal data processing
-* Provide automated data export mechanisms
-* Implement soft-delete and hard-delete workflows for user accounts
-* Anonymize user telemetry data upon account deletion
+##### Storage responsibilities (step 6)
+* Save the audio files and images in the media storage
+* Save the song in the catalogue
 
-##### Profile management & auditing responsibilities
-* Expose secure APIs for users to update personal information and avatars
-* Validate and process image uploads for profile pictures
-* Audit log critical account actions (password changes, failed logins, role changes)
-* Detect and block suspicious login attempts (geo-velocity checks, brute-force mitigation)
+##### Publishing responsibilities (step 7)
+* Send the new song to the search index
+* Tell the artist if the upload succeeded or failed
+* Record uploads and changes to song information in the audit log
+
+---
+
+### Feature: Catalogue Search
+
+As a listener, I want to search for songs, artists and albums so that I can quickly find the music I want.
+
+#### Feature breakdown
+
+1. The listener types a search text (song title, artist name, album).
+2. The system suggests possible searches while the listener is typing.
+3. The system cleans the search text and looks for matches in the search index, even with spelling mistakes.
+4. The system orders the results by match quality and popularity and groups them by type.
+5. The system gets extra information for the results (cover image, song length).
+6. The system shows the results to the listener.
+7. The listener chooses a result, and the system records this choice.
+8. In the background, the system keeps the search index up to date when the catalogue changes.
+
+#### Responsibilities
+
+##### Search input responsibilities (steps 1, 2)
+* Receive the search text from the listener
+* Suggest possible searches while the listener is typing
+
+##### Search processing responsibilities (step 3)
+* Clean the search text (lowercase, remove accents and special characters)
+* Find results even when the search text has spelling mistakes
+* Look for matching songs, artists and albums in the search index
+
+##### Ordering & filtering responsibilities (step 4)
+* Order the results by how well they match and by popularity
+* Hide songs that are not available (not published or blocked in the listener's country)
+* Group the results by type (best result, songs, artists, albums)
+
+##### Result display responsibilities (steps 5, 6)
+* Get extra information and cover images for the results
+* Split long result lists into pages
+* Show the search results on the screen
+
+##### Search history responsibilities (step 7)
+* Record search texts and the results that listeners choose
+
+##### Search index responsibilities (step 8)
+* Add new songs sent by the catalogue to the search index
+* Remove deleted or unpublished songs from the search index
+* Update song popularity using play statistics
+* Save the search index and keep it available for searches
 
 ---
 
 ### Feature: Audio Streaming
 
-As a listener, I want to stream audio tracks on demand so that I can listen to music instantly without storing it locally.
+As a listener, I want to play songs directly from the internet so that I can listen to music immediately without downloading it.
 
 #### Feature breakdown
 
-1. The listener selects a track to play.
-2. The application requests the audio stream manifest from the media server.
-3. The system validates the listener's subscription tier, active session, and region limits.
-4. The media server resolves the optimal CDN edge node and generates secure access URLs.
-5. The application buffers the audio chunks, selecting the bitrate based on network conditions.
-6. The system decodes and plays the audio while maintaining a pre-fetch buffer.
-7. The system records playback telemetry for statistics, royalty calculations, and ad-insertion triggers.
+1. The listener chooses a song to play.
+2. The application asks the system for the song's audio.
+3. The system checks that the listener is logged in and that the song is available in the listener's country.
+4. The system finds the song's audio files and creates a temporary access link.
+5. The application downloads the audio in small parts and changes the quality depending on the internet speed.
+6. The application plays the audio, loads the next parts in advance, and lets the listener control the playback.
+7. The system records the play for statistics.
 
 #### Responsibilities
 
-##### Playback authorization responsibilities
-* Verify that the requesting user has a valid and active session token
-* Retrieve and evaluate the user's current subscription tier rules (skip limits, ad-free)
-* Enforce geographical licensing availability for the requested track
-* Generate secure, short-lived, signed URLs for CDN asset retrieval
-* Block concurrent playback across multiple devices for a single standard account
+##### Access check responsibilities (steps 2, 3)
+* Check that the listener is logged in
+* Check that the song is published and available in the listener's country
+* Allow playback on only one device at a time per account
 
-##### Audio delivery & infrastructure responsibilities
-* Retrieve audio files from distributed object storage or Content Delivery Networks (CDNs)
-* Deliver audio via Adaptive Bitrate Streaming (ABR) protocols (HLS/DASH)
-* Provide multiple codec options (AAC (Advanced Audio Coding), Ogg Opus, FLAC (Free Lossless Audio Codec) for Hi-Fi)
-* Dynamically adjust served bitrates based on real-time client bandwidth constraints
-* Manage edge caching policies to minimize origin server load and reduce latency
+##### Audio delivery responsibilities (steps 4, 5)
+* Find the song's audio files in the media storage
+* Create temporary, secure links to the audio files
+* Send the audio in small parts in several qualities
+* Change the audio quality depending on the listener's internet speed
+* Keep often played songs in a cache close to the listeners
 
-##### Client playback & state responsibilities
-* Buffer incoming audio chunks to guarantee uninterrupted playback
-* Decode audio stream formats on client hardware/OS
-* Provide seamless playback controls (play, pause, seek, skip, crossfade)
-* Recover gracefully from network state transitions (Wi-Fi to Cellular)
-* Manage the local playback queue and auto-play transitions (gapless playback)
+##### Player responsibilities (steps 5, 6)
+* Load audio parts in advance to avoid pauses
+* Decode and play the audio on the listener's device
+* Apply the volume adjustment during playback
+* Show the player with playback controls (play, pause, jump forward or back, skip)
+* Continue playing after short connection problems
 
-##### Advertisement & monetization responsibilities (Free Tier)
-* Track the number of tracks played or time elapsed to trigger ad breaks
-* Resolve personalized audio and display advertisements from the ad exchange
-* Stitch audio ads into the playback queue seamlessly
-* Block playback controls (skip/seek) during advertisement playback
-
-##### Playback telemetry & royalty logging responsibilities
-* Record precise playback events (user ID, track ID, context, timestamp, duration)
-* Detect when audio playback reaches the monetization threshold (30 seconds)
-* Forward verified streaming logs to the royalty calculation data pipeline
-* Detect and filter out fraudulent streams, bot activity, and artificial inflation
-* Synchronize play counts with the public catalogue database
+##### Play statistics responsibilities (step 7)
+* Save each play (listener, song, time, duration)
+* Count a play only after 30 seconds of listening
+* Calculate play counts and send them to the catalogue and the search
 
 ---
 
-### Feature: Song Uploading (Artist Portal)
+### Feature: Playlists
 
-As an artist, I want to upload audio files and track metadata so that my music becomes available for public streaming.
-
-#### Feature breakdown
-
-1. The artist selects an audio file and cover art in the artist portal.
-2. The artist inputs detailed metadata (title, genre, contributors, ISRC codes).
-3. The system validates the file format, size limits, and checks for corruption.
-4. The system queues the upload for asynchronous media processing.
-5. The system transcodes the audio into optimized streaming formats and normalizes loudness.
-6. The system stores the processed assets in distributed storage and updates the catalogue.
-7. The system notifies the artist of the successful publication and triggers release radars.
-
-#### Responsibilities
-
-##### Upload intake & validation responsibilities
-* Verify the user holds verified artist or label privileges
-* Accept multipart uploads for lossless audio files (WAV, FLAC, ALAC)
-* Support resumable uploads for large files over unstable connections
-* Validate audio file integrity, bit-depth, and sample rate requirements
-* Validate cover art image dimensions, aspect ratios, and color profiles
-* Detect malicious payloads or corrupted file headers
-
-##### Metadata & rights responsibilities
-* Collect standard track metadata (title, genre, release date, explicit lyrics flag)
-* Collect industry-standard identifiers (ISRC for tracks, UPC for albums)
-* Manage contributor credits (producers, writers, featured artists)
-* Validate copyright ownership assertions and handle digital fingerprinting matches
-* Link the track to the correct artist profile and album grouping
-
-##### Media processing & transcoding responsibilities
-* Queue and distribute transcoding jobs across a worker pool
-* Transcode raw audio files into target streaming formats and bitrates 
-* Perform LUFS loudness analysis and apply volume normalization metadata
-* Generate multi-resolution thumbnail variants and WebP versions of cover art
-* Extract and store audio waveforms for visual scrubbing
-
-##### Storage & cataloguing responsibilities
-* Store transcoded audio chunks and artwork in geo-redundant distributed storage
-* Assign unique internal resource identifiers (URIs) to the generated media assets
-* Create and link the track, album, and artist records in the relational catalogue database
-* Notify the global search index about the newly published entities
-* Schedule timed releases ( publish automatically at midnight on a specific date)
-
-##### Notification & audit responsibilities
-* Dispatch real-time webhooks or WebSocket events updating upload progress
-* Notify the artist via email/app about a successful publication or processing failure
-* Log all metadata changes and file uploads for compliance and rollback
-* Trigger notifications to users who follow the artist (Release Radar)
-
----
-
-### Feature: Catalogue Search & Discovery
-
-As a listener, I want to search and browse tracks, artists, albums, and playlists so that I can quickly find and explore music I want to listen to.
+As a listener, I want to create playlists, add or remove songs and choose who can see them so that I can organize my music and share it if I want.
 
 #### Feature breakdown
 
-1. The listener inputs a search query (keyword, artist name, track title, album).
-2. The client application debounces the input and fetches autocomplete suggestions.
-3. The system parses the query, applies typo tolerance, and queries the search index.
-4. The system ranks results by relevance and popularity, grouping them into distinct views.
-5. The system retrieves rich metadata (artwork, durations) for the top hits.
-6. The system returns structured results to the client.
-7. The listener selects an entity, and the system logs the interaction to improve future ranking.
+1. The listener creates a playlist and gives it a name, and optionally a description and an image.
+2. The system creates the playlist and sets the listener as its owner.
+3. The listener adds, removes or reorders songs in the playlist.
+4. The system checks the changes and saves the new list of songs.
+5. The listener chooses who can see the playlist (private, public or link only).
+6. The system updates the playlist on all the listener's devices.
+7. The listener can delete the playlist.
 
 #### Responsibilities
 
-##### Query processing & routing responsibilities
-* Receive search queries via a dedicated, low-latency API gateway
-* Normalize input queries (strip diacritics, lowercase, remove special characters)
-* Apply fuzzy string matching, stemming, and typo tolerance algorithms
-* Detect search intent (matching "best rock songs" to curated playlists)
-* Route search requests to the appropriate distributed search nodes (Elasticsearch)
+##### Playlist creation responsibilities (steps 1, 2)
+* Show the playlist screens (create, edit, view)
+* Check the playlist name and description
+* Save the playlist and its owner
+* Save the playlist image in several sizes
 
-##### Indexing & ranking responsibilities
-* Maintain a highly available inverted index of the entire active music catalogue
-* Ingest real-time catalogue updates (new releases, deleted tracks, metadata edits)
-* Calculate and update entity popularity scores based on recent streaming velocity
-* Rank search results based on textual relevance, global popularity, and personalization weight
-* Exclude private playlists, unlisted tracks, and region-blocked content from public results
+##### Song list responsibilities (steps 3, 4)
+* Add one or more songs to a playlist
+* Remove songs and warn about duplicate songs
+* Change the order of the songs
+* Check that added songs exist and are available in the listener's country
+* Get song information (title, artist, length) from the catalogue
 
-##### Result aggregation & formatting responsibilities
-* Group results into distinct categories (Top Result, Tracks, Artists, Albums, Playlists)
-* Fetch supplementary metadata and CDN image URLs from the primary database or cache
-* Hydrate tracklist data for album and playlist results
-* Format search payloads to minimize response payload size (GraphQL or sparse REST)
-* Support cursor-based pagination for deep browsing of search categories
+##### Access & visibility responsibilities (step 5)
+* Allow only the owner to change the playlist
+* Manage the playlist visibility (private, public, link only)
+* Create share links for link-only playlists
 
-##### Personalization & recommendation responsibilities
-* Boost search ranking based on the user's historical listening preferences and library
-* Suggest query auto-completions while the user is typing
-* Generate dynamic "More by this artist" or "Fans also like" relations for detail pages
-* Filter explicit content dynamically based on the user's parental control settings
+##### Sync responsibilities (step 6)
+* Send playlist changes to all the listener's devices
+* Save playlist changes so that they are the same on every device
 
-##### Search telemetry & analytics responsibilities
-* Log raw search queries for trend analysis and vocabulary improvement
-* Track click-through rates (CTR) on specific search results (query-to-click mapping)
-* Identify "zero-result" queries to inform content acquisition or fix synonym mappings
-* Monitor search API latency and index performance under load
-
----
-
-### Feature: Payment Processing & Premium Access
-
-As a listener, I want to subscribe to Premium so that I can unlock additional features on the platform.
-
-#### Feature breakdown
-
-1. The user views subscription tiers and selects a plan (Individual, Family, Student).
-2. The system redirects the user to a secure payment gateway or handles native in-app purchases.
-3. The payment gateway processes the transaction securely and issues an asynchronous webhook.
-4. The system validates the webhook payload and updates the user's subscription state in the database.
-5. The system provisions the Premium entitlements and clears client-side capability caches.
-6. The system generates a receipt and schedules the next recurring billing cycle.
-7. The application unlocks ad-free listening, offline downloads, and higher audio quality.
-
-#### Responsibilities
-
-##### Subscription & plan management responsibilities
-* Define and manage product catalogues, pricing tiers, and currency localization
-* Support complex subscription models (free trials, family plans, student discounts)
-* Manage the complete subscription lifecycle (active, past_due, canceled, trialing)
-* Process scheduled recurring renewals via cron jobs or queue workers
-* Manage grace periods and dunning flows for failed recurring payments
-
-##### Payment gateway integration responsibilities
-* Integrate securely with external PSPs (Payment Service Providers like Apple/Google IAP)
-* Render secure, hosted payment fields (PCI-DSS compliant) to collect card details
-* Validate and process asynchronous payment confirmation webhooks securely (signature verification)
-* Handle 3D Secure (SCA) authentication flows for European users
-* Execute refunds, prorations, and subscription upgrades/downgrades
-
-##### Entitlement & capability responsibilities
-* Update user database records to reflect active Premium status instantly upon payment
-* Inject authorization flags into the user's session token (JWT claims)
-* Unlock Premium capabilities (offline mode, 320kbps audio, unlimited skips) dynamically
-* Revoke Premium capabilities strictly when a subscription expires or is chargebacked
-* Manage seat allocations for Family plan managers and invitees
-
-##### Security, compliance, & auditing responsibilities
-* Ensure zero internal storage of raw Primary Account Numbers (PAN) to maintain PCI compliance
-* Audit log all financial state transitions, webhook receipts, and administrative overrides
-* Generate, store, and email legal invoices and tax receipts (VAT calculation)
-* Implement idempotency keys to prevent duplicate charges during network failures
-* Reconcile internal subscription states with the external payment gateway's source of truth
-
----
-
-### Feature: Playlist Management
-
-As a user, I want to create, modify, delete, and organize tracks into playlists, and control their visibility, so that I can manage my music collection and choose whether to share it with others.
-
-#### Feature breakdown
-
-1. The user triggers the "Create playlist" action and provides metadata (name, description, image).
-2. The system provisions the playlist record and assigns the user as the owner.
-3. The user interacts with the application to add, remove, or reorder tracks.
-4. The system validates the operations, updates the track indices, and persists changes.
-5. The user toggles the playlist visibility (private, unlisted, public, collaborative).
-6. The system synchronizes the playlist state to the global search index (if public) and to all user devices.
-7. The user can delete the playlist, triggering a cleanup of the relational data.
-
-#### Responsibilities
-
-##### Metadata & lifecycle responsibilities
-* Create playlist entities with validated metadata (name length, description sanitation)
-* Bind cryptographic ownership of the playlist to the creator's user ID
-* Process, resize, and store custom user-uploaded playlist cover images
-* Enforce system limits (maximum tracks per playlist, maximum playlists per user)
-* Soft-delete playlist entities to allow for accidental deletion recovery (trash bin)
-
-##### Content mutation & ordering responsibilities
-* Handle bulk and single track additions to a playlist
-* Handle track removals and deduplication (preventing/warning about duplicate entries)
-* Manage complex ordering logic (linked lists or fractional indexing) for drag-and-drop reordering
-* Validate that added tracks exist, are active, and are available in the user's region
-* Support collaborative mutations where multiple authorized users can edit the tracklist
-
-##### Synchronization & state management responsibilities
-* Persist playlist track relations and metadata in a high-throughput relational database
-* Push playlist state changes via WebSockets/SSE to synchronize the user's active devices
-* Expose paginated APIs for clients to retrieve large playlists (10,000 tracks) efficiently
-* Resolve mutation conflicts if a user edits a playlist simultaneously on two devices
-
-##### Access control & visibility responsibilities
-* Enforce strict Authorization rules (only owners/collaborators can mutate)
-* Manage visibility states: Public (searchable), Unlisted (link-only), Private (owner-only)
-* Generate secure sharing links for unlisted playlists
-* Notify the distributed search engine immediately when a playlist becomes public
-* Scrub the search engine index when a public playlist is made private or deleted
-
-##### Engagement & relation responsibilities
-* Allow users to "Like" or "Follow" other users' public playlists
-* Track follower counts and update playlist popularity metrics
-* Generate personalized playlist recommendations based on added tracks (auto-suggest)
-* Manage offline sync state flags for playlists downloaded by the user
-
----
-
-### Feature: Group Listening Session
-
-As a listener, I want to create a listening room with other users so that we can experience the same audio playback simultaneously, regardless of our physical locations.
-
-#### Feature breakdown
-
-1. The host initiates a session; the system creates a virtual room and returns a deep link.
-2. Guests click the link, authenticate, and establish WebSocket connections to the room server.
-3. The system manages the room roster, enforcing capacity limits and broadcasting join/leave events.
-4. The host (or permitted guests) modifies the playback queue or changes playback state (play/pause/seek).
-5. The server calculates absolute timestamps and broadcasts the playback command to all clients.
-6. Client applications adjust playback speed slightly or skip to synchronize with the global clock, compensating for latency.
-7. The system handles gracefully if the host disconnects (reassigning host or closing the room).
-
-#### Responsibilities
-
-##### Session & topology management responsibilities
-* Generate short-lived, secure unique identifiers for listening rooms
-* Manage the routing of users to specific stateful real-time servers 
-* Authenticate joining participants and enforce Premium-only restrictions if applicable
-* Maintain the real-time presence registry (who is currently online in the room)
-* Execute host-migration algorithms or teardown procedures when the session creator leaves
-
-##### Synchronization & communication responsibilities
-* Establish, upgrade, and maintain bidirectional WebSocket or WebRTC connections
-* Implement a highly accurate global clock synchronization protocol 
-* Calculate network latency offset (ping time) for each individual connected client
-* Broadcast synchronized playback vectors (Track ID, State, Position, Absolute Timestamp)
-* Throttle and debounce rapid playback commands to prevent broadcast storms
-
-##### Shared state & playback responsibilities
-* Maintain the server-side source of truth for the shared playback queue
-* Process queue mutations (add next, remove, reorder) from authorized participants
-* Instruct client devices to pre-fetch upcoming audio chunks to prevent buffering desync
-* Forbid standard clients from relying on local time; enforce server-dictated playhead positions
-* Resolve regional licensing conflicts if a track is unavailable for a specific international guest
-
-##### Client execution & UX responsibilities
-* Dynamically adjust playback rate (pitch-corrected audio stretching) to catch up to the sync point
-* Mute or crossfade gracefully during hard seeks dictated by the host
-* Display visual indicators of other users' presence and listening status
-* Provide localized error handling if synchronization fails due to extreme packet loss
-
-##### Infrastructure & scalability responsibilities
-* Scale real-time WebSocket nodes horizontally using a PubSub backplane (Redis Pub/Sub)
-* Handle abrupt WebSocket disconnections (mobile network drops) with fast reconnection windows
-* Isolate group listening traffic to prevent it from impacting standard REST API performance
-
----
-
-### Feature: Offline Downloading (Premium)
-
-As a Premium subscriber, I want to download songs to my device so that I can listen to music without an active network connection.
-
-#### Feature breakdown
-
-1. The subscriber marks an album, track, or playlist for offline sync.
-2. The application requests download manifests and DRM licenses from the server.
-3. The system verifies the user's Premium entitlement and offline device limits.
-4. The application pulls encrypted audio chunks, metadata, and artwork in the background.
-5. The local OS stores the files in a secure, sandboxed directory and updates the local SQLite index.
-6. When offline, the application routes playback requests to the local storage instead of the network.
-7. The application periodically "calls home" to renew DRM licenses and report offline listening stats.
-
-#### Responsibilities
-
-##### Licensing & DRM responsibilities
-* Validate active Premium account subscription before issuing download manifests
-* Check individual track distribution rights (some labels prohibit offline caching)
-* Generate and issue device-bound, time-limited decryption keys (DRM)
-* Enforce maximum device limits (max 5 devices per account for offline sync)
-* Enforce maximum track limits (max 10,000 downloaded tracks per device)
-
-##### Payload & network transfer responsibilities
-* Package audio streams, essential JSON metadata, and compressed artwork for batch transfer
-* Interface with mobile OS background download managers (iOS Background Tasks, Android WorkManager)
-* Support automatic pause/resume of downloads based on network type (Wi-Fi only settings)
-* Verify cryptographic checksums (MD5/SHA) of downloaded chunks to prevent file corruption
-* Manage download queues and prioritize explicit user requests over background syncs
-
-##### Local storage & state responsibilities
-* Encrypt and store media files within secure, non-accessible application sandboxes
-* Maintain a robust local relational database (SQLite/Room/CoreData) to index offline content
-* Map network URIs to local file paths dynamically during offline mode
-* Monitor device storage limits and pause downloads if disk space drops below safe thresholds
-* Provide UI mechanics to clear all downloads or purge specific entities
-
-##### Offline playback rules responsibilities
-* Intercept playback routing to serve from local disk instead of initiating network requests
-* Buffer and log playback telemetry locally while the device is offline
-* Batch and flush offline playback telemetry to the server upon network reconnection
-* Seamlessly fall back to streaming if a downloaded file is found to be corrupted
-
-##### Synchronization & revocation responsibilities
-* Periodically sync playlist additions/removals with the server and queue delta downloads
-* Mandate a "call home" heartbeat (every 30 days) to keep offline licenses valid
-* Automatically invalidate local DRM keys if the user's Premium subscription lapses
-* Purge local media files automatically upon explicit user logout
+##### Deletion responsibilities (step 7)
+* Delete playlists and allow restoring them for a short time
 
 ---
 
 ## Auxiliary features
 
+### Feature: User Accounts & Login
+As a user, I want to create an account, log in and manage my profile so that I can use the platform safely and keep my personal information up to date.
+
+### Feature: Payment & Premium
+As a listener, I want to pay for a Premium subscription so that I can use extra features on the platform.
+
+### Feature: Group Listening
+As a listener, I want to create a listening room with other users so that we can listen to the same music at the same time from different places.
+
+### Feature: Offline Download (Premium)
+As a Premium user, I want to download songs to my device so that I can listen to them without an internet connection.
+
 ### Feature: Notifications
-As a user, I want to receive notifications about new releases from my favorite artists so that I can discover their latest music.
+As a user, I want to get notifications about new songs from my favourite artists so that I can discover their latest music.
 
-### Feature: Music Recommendations (AI-Powered)
-As a listener, I want to receive personalized song recommendations based on my listening history and preferences so that I can discover new music.
+### Feature: Music Recommendations
+As a listener, I want to get song suggestions based on what I listen to so that I can discover new music.
 
-### Feature: Artist Management & Promotion
-As an artist, I want to manage my music releases, track their performance, and promote my songs so that I can reach a wider audience and grow my listener base.
+### Feature: Artist Statistics & Promotion
+As an artist, I want to manage my releases, see how they perform and promote them so that I can reach more listeners.
 
-### Feature: Music Player & Playback Queue
-As a listener, I want to control media playback and manage my upcoming queue so that I have full control over my continuous listening experience.
+### Feature: Music Player & Queue
+As a listener, I want to control the playback and manage the list of next songs so that I can listen to music without interruption.
 
-### Feature: User Library & Artist Following
-As a listener, I want to save tracks, albums, and playlists to my library and follow artists so that I can easily access my favorite content.
+### Feature: User Library & Following Artists
+As a listener, I want to save songs, albums and playlists to my library and follow artists so that I can easily find my favourite music.
 
 ### Feature: Settings & Privacy
-As a user, I want to configure playback settings and privacy preferences so that I can tailor the platform behavior to my needs.
+As a user, I want to change playback and privacy settings so that the platform works the way I like.
