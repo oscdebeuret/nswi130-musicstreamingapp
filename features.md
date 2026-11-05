@@ -19,22 +19,6 @@
 | 13  | User library & following artists |      |
 | 14  | Settings & privacy               |      |
 
-## Why these core features
-
-For the MVP, we chose the smallest set of features that gives the main value of the
-platform from start to end: **an artist publishes a song, a listener finds it, and the
-listener plays it**.
-
-- **Song upload** is core because without songs there is nothing to listen to.
-- **Catalogue search** is core because listeners must be able to find songs.
-- **Audio streaming** is core because playing music is the main purpose of the product.
-- **Playlists** are core because they are the main way for listeners to organize their music
-  and come back to it, which makes them use the platform again.
-
-All other features are auxiliary for the MVP. User accounts and login are needed, but they
-are a common service that we expect to exist. Payment, group listening and offline download
-add value or bring money, but the platform can work without them.
-
 ## Core features and responsibilities
 
 ### Feature: Song Upload
