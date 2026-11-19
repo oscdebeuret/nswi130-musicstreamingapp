@@ -175,6 +175,7 @@ Technologies (open source and not tied to one cloud provider):
 ### Dynamic views
 
 One dynamic view per core feature, at container level. The numbers give the order of the steps.
+Dashed arrows are responses to an earlier request.
 
 #### Song Upload
 
@@ -202,9 +203,10 @@ One dynamic view per core feature, at container level. The numbers give the orde
 1. The listener types a search text in the Listener App.
 2. The Listener App sends the search text to the Search Service (suggestions while typing).
 3. The Search Service finds matches in the Search Index (with spelling mistakes), orders and groups them.
-4. The listener chooses a result.
-5. The Listener App sends the chosen result to the Search Service.
-6. The Search Service records the search and the choice in the Search Log Database.
+4. The Search Service returns the results (songs, artists, albums) to the Listener App, which shows them.
+5. The listener chooses a result.
+6. The Listener App sends the chosen result to the Search Service.
+7. The Search Service records the search and the choice in the Search Log Database.
 
 #### Audio Streaming
 
@@ -215,9 +217,10 @@ One dynamic view per core feature, at container level. The numbers give the orde
 3. The Streaming Service checks the login with User Accounts.
 4. It checks in the Catalogue Database that the song is available in the listener's country.
 5. It finds the audio files in the File Storage and creates a temporary, signed link.
-6. The Listener App downloads the audio in small parts from the Audio Delivery Network (CDN).
-7. Only on a cache miss, the CDN gets the parts from the File Storage.
-8. The Listener App reports the play to the Streaming Service.
-9. The Streaming Service saves the play in the Play History Database.
-10. After 30 seconds of listening, it updates the play count in the Catalogue Database.
+6. It returns the signed audio link to the Listener App.
+7. The Listener App downloads the audio in small parts from the Audio Delivery Network (CDN).
+8. Only on a cache miss, the CDN gets the parts from the File Storage.
+9. The Listener App reports the play to the Streaming Service.
+10. The Streaming Service saves the play in the Play History Database.
+11. After 30 seconds of listening, it updates the play count in the Catalogue Database.
 
