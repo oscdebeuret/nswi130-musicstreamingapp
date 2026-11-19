@@ -191,7 +191,7 @@ One dynamic view per core feature, at container level. The numbers give the orde
 9. The worker reports the end of processing and the volume adjustment to the Song Management Service.
 10. The Song Management Service sets the song status to "published" in the Catalogue Database.
 11. It records the upload in the Audit Log Database.
-12. The Artist Portal gets the result and shows it to the artist.
+12. The Artist Portal asks the Song Management Service for the upload status (published or failed) and shows it to the artist.
 13. Later, the Catalogue Sync Worker detects the new song in the Catalogue Database.
 14. It adds the song to the Search Index, so listeners can find it.
 
